@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Object Detection</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(to right, #00c6ff, #0072ff);
+            font-family: 'Arial', sans-serif;
+            color: #fff;
+        }
+
+        .header {
+            padding: 2rem 0;
+            text-align: center;
+            border-bottom: 5px solid #0056b3;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-weight: 300;
+            font-size: 2.5rem;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .upload-btn {
+            margin: 10px 0;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            border-radius: 50px;
+            border: 2px solid #0072ff;
+        }
+
+        .upload-btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .card {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .img-container {
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 2px solid #0072ff;
+        }
+
+        .img-container video,
+        .img-container img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: cover;
+            border-radius: 15px;
+        }
+
+        .results {
+            padding: 20px;
+            text-align: center;
+            border-top: 2px solid #0072ff;
+        }
+
+        .loading {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            padding-top: 20%;
+        }
+
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #00c6ff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border: none;
+            transition: background-color 0.3s, transform 0.3s;
+            border-radius: 50px;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            padding: 20px 0;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Responsive Typography */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .upload-btn, .btn-success {
+                font-size: 0.9rem;
+                padding: 10px 20px;
+            }
+
+            .img-container {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>Sign Language Detection using YOLOv5</h1>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <h5 class="card-title"><i class="fas fa-upload"></i> Upload Image</h5>
+                        <div class="img-container">
+                            <video autoplay id="video"
+                                poster="https://img.freepik.com/free-vector/group-young-people-posing-photo_52683-18824.jpg?size=338&ext=jpg"></video>
+                            <img src="" id="photo" style="display:none;">
+                        </div>
+                        <button type="button" class="btn btn-primary upload-btn" id="uload"><i class="fas fa-file-upload"></i> Upload Image</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title text-center"><i class="fas fa-predict"></i> Prediction Results</h5>
+                        <div class="results res-part2"></div>
+                        <button id="send" type="button" class="btn btn-success btn-block"><i class="fas fa-play"></i> Predict</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" class="form-control" id="url" value="../predict" />
+        <input name="upload" type="file" id="fileinput" style="display: none;" /><br />
+
+        <div class="loading" id="loading">
+            <div class="loader"></div>
+            <p>Processing... Please wait.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <footer>
+            <p>&copy; SignLens. <strong>Developed by Nachiket Gadilohar</strong></p>
+        </footer>
+        
+    </div>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
+    </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
+    </script>
+
+    <script>
+        var base_data = "";
+
+        function sendRequest(base64Data) {
+            if (base64Data) {
+                var url = $("#url").val();
+                $("#loading").show();
+                $.ajax({
+                    url: url,
+                    type: "post",
+                    cache: false,
+                    async: true,
+                    crossDomain: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    },
+                    data: JSON.stringify({
+                        image: base64Data
+                    }),
+                    success: function (res) {
+                        $(".res-part2").html("");
+                        var imageData = res.image;
+                        $(".res-part2").append("<img class='resp-img' src='data:image/jpeg;base64," + imageData + "' alt='' style='max-width: 100%; border-radius: 15px;' />");
+                        $("#loading").hide();
+                    },
+                    error: function () {
+                        alert("Error processing request");
+                        $("#loading").hide();
+                    }
+                });
+            }
+        }
+
+        $(document).ready(function () {
+            $("#uload").on("click", function () {
+                $("#fileinput").click();
+            });
+
+            $("#fileinput").change(function () {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function (e) {
+                        var url = e.target.result;
+                        base_data = url.split(",")[1]; // Extract base64 data
+                        $("#photo").attr("src", url).show();
+                        $("#video").hide();
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                }
+            });
+
+            $("#send").click(function () {
+                sendRequest(base_data);
+            });
+        });
+    </script>
+</body>
+
+</html>
